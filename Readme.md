@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A small node library that makes it easy to create, verify and decode jwts. It requires the following environment variables to be set in the calling node application/code and to be set via the `EnvHandler.getInstance().setEnv(process.env)` call:
+A small node library that makes it easy to create, verify and decode jwts. It requires the following environment variables to be set in the calling node application/code and to be set via the `EnvHandler.getInstance().setEnv(process.env)` call **BEFORE ANY CALL IS MADE VIA THE** `JWTHandler` Singleton Class:
 
 - `NEXT_SERVER_WEBSITE_DOMAIN`
 - `NEXT_SERVER_API_DOMAIN`
