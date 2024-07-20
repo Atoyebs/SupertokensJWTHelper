@@ -3,10 +3,7 @@
 import axios from "axios";
 import JsonWebToken from "jsonwebtoken";
 import jwksClient, { JwksClient } from "jwks-rsa";
-import dotenv from "dotenv";
 import { EnvHandler } from "./env-handler";
-
-dotenv.config();
 
 export class JWTHandler {
   private static instance: JWTHandler;
