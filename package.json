@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "npm run test",
-    "build": "tsc"
+    "build": "tsc",
+    "link": "tsc && npm link"
   },
   "repository": {
     "type": "git",
