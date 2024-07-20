@@ -1,6 +1,5 @@
 // https://k94n.com/es6-modules-single-instance-pattern
 
-import axios from "axios";
 import JsonWebToken from "jsonwebtoken";
 import jwksClient, { JwksClient } from "jwks-rsa";
 import { EnvHandler } from "./env-handler";
@@ -31,31 +30,33 @@ export class JWTHandler {
   async createNewJWT(payload: any, days: number) {
     const envVars = EnvHandler.getInstance().envs;
 
-    const { data: jwtResponse } = await axios.post(
-      `${envVars.NEXT_SERVER_SUPERTOKENS_CORE!}/recipe/jwt`,
-      {
+    const response = await fetch(`${envVars.NEXT_SERVER_SUPERTOKENS_CORE!}/recipe/jwt`, {
+      method: "POST",
+      headers: {
+        rid: "jwt",
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify({
         payload: {
+          ...payload,
           source: "microservice",
         },
         useStaticSigningKey: true,
         algorithm: "RS256",
         jwksDomain: envVars.NEXT_SERVER_API_DOMAIN,
         validity: this.convertDaysToSeconds(days),
-      },
-      {
-        headers: {
-          rid: "jwt",
-          "Content-Type": "application/json",
-        },
-      }
-    );
+      }),
+    });
 
-    if (jwtResponse.status === "OK") {
-      // Send JWT as Authorization header to M2
-      this.aJWT = jwtResponse.jwt;
-      return jwtResponse.jwt;
+    if (!response.ok) {
+      throw new Error("Request failed with status: " + response.status);
     }
-    throw new Error("Unable to create JWT. Should never come here.");
+
+    const jwtResponse = await response.json();
+
+    // Send JWT as Authorization header to M2
+    this.aJWT = jwtResponse.jwt;
+    return jwtResponse.jwt;
   }
 
   private createJWKSClient(jwksUri?: string) {
