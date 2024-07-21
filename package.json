@@ -7,6 +7,7 @@
   "scripts": {
     "test": "npm run test",
     "build": "tsc",
+    "sample": "ts-node src/sample/index.ts",
     "link": "tsc && npm link"
   },
   "repository": {
@@ -30,8 +31,10 @@
   ],
   "homepage": "https://github.com/Atoyebs/SupertokensJWTHelper#readme",
   "dependencies": {
+    "jose": "^5.6.3",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",
+    "ts-node": "^10.9.2",
     "tslib": "^2.6.3"
   },
   "devDependencies": {

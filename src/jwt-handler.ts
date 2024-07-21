@@ -3,15 +3,24 @@
 import JsonWebToken from "jsonwebtoken";
 import jwksClient, { JwksClient } from "jwks-rsa";
 import { EnvHandler } from "./env-handler";
+import { JwksHandler } from "./jwks-handler";
 
 export class JWTHandler {
   private static instance: JWTHandler;
   private client: JwksClient;
+  private jwksHandler: JwksHandler;
+  private jwksUri: string;
+  private envs: any;
   public aJWT: string;
 
   private constructor() {
+    this.envs = EnvHandler.getInstance().envs;
+
+    const aJwksUri = `${this.envs.NEXT_SERVER_API_DOMAIN}/${this.envs.NEXT_SERVER_API_BASE_PATH}/jwt/jwks.json`;
+    this.jwksUri = aJwksUri;
     this.client = this.createJWKSClient();
     this.aJWT = "";
+    this.jwksHandler = new JwksHandler(aJwksUri);
   }
 
   public static getInstance(): JWTHandler {
@@ -73,14 +82,29 @@ export class JWTHandler {
     }
   }
 
-  private async getKey() {
-    const jwks = (await this.client.getKeys()) as { kid: string }[];
-    const sKey = jwks[1].kid;
+  public async getKeySets(): Promise<{ kid: string }[]> {
+    try {
+      const response = await fetch(this.jwksUri);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch JWKS: ${response.statusText}`);
+      }
+      const jwks = await response.json();
 
-    const signingKey = await this.client.getSigningKey(sKey);
-    const publicKey = signingKey.getPublicKey();
+      return jwks["keys"];
+    } catch (error) {
+      console.log(`Error attmepting to get keys: `, error);
+      throw error;
+    }
+  }
 
-    return publicKey;
+  /**
+   * Returns an array containing the second element of the input array and its "kid" property.
+   *
+   * @param {Array<{kid: string}>} keySetArray - The input array of objects with a "kid" property.
+   * @return {Array<{kid: string} | string>} - An array containing the needed key set (object) and the second element of the input array and its "kid" property.
+   */
+  private getJwKeySet(keySetArray: { kid: string }[]) {
+    return keySetArray[1];
   }
 
   /**
@@ -91,7 +115,9 @@ export class JWTHandler {
    * If the decoding fails, the Promise is rejected with the error.
    */
   public async decodeJWT(jwt: string): Promise<[any, boolean]> {
-    const key = await this.getKey();
+    const keySets = await this.getKeySets();
+    const keySet = this.getJwKeySet(keySets);
+    const key = await this.jwksHandler.getPublicKeyPEM(keySet, keySet.kid);
 
     return new Promise((resolve, reject) => {
       JsonWebToken.verify(jwt, key, {}, function (err, decoded) {

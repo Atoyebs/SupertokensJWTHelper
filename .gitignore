@@ -90,3 +90,5 @@ jspm_packages
 # yarn v2 and v3
 .yarn/unplugged
 .yarn/build-state.yml
+
+src/sample
