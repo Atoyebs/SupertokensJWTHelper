@@ -1,4 +1,5 @@
-import jose, { createRemoteJWKSet, JWK, importJWK, exportSPKI } from "jose";
+import jose, { JWK, importJWK, exportSPKI } from "jose";
+import jwkToPem from "jwk-to-pem";
 
 export class JwksHandler {
   private jwksUri: string;
@@ -7,23 +8,17 @@ export class JwksHandler {
     this.jwksUri = jwksUri;
   }
 
-  private async fetchJWKS(): Promise<{ keys: JWK[] }> {
-    const response = await fetch(this.jwksUri);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch JWKS: ${response.statusText}`);
-    }
-    return response.json();
+  public async getCryptoKey(jwk: JWK, alg?: string): Promise<CryptoKey> {
+    return (await importJWK(jwk, alg)) as CryptoKey;
   }
 
   // Optional: Method to get public key in PEM format
-  async getPublicKeyPEM(key: { kid: string } & any, kid: string): Promise<string> {
-    if (!key) {
-      throw new Error(`No key found with kid: ${kid}`);
+  getPublicKeyPEM(key: { kid: string } & any): string {
+    try {
+      return jwkToPem(key);
+    } catch (error) {
+      throw error;
     }
-
-    const publicKey = (await importJWK(key, key.alg)) as jose.KeyLike;
-    const publicKeyPEM = await exportSPKI(publicKey);
-    return publicKeyPEM;
   }
 }
 

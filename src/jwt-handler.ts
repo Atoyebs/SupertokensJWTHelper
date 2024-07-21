@@ -1,9 +1,9 @@
 // https://k94n.com/es6-modules-single-instance-pattern
 
-import JsonWebToken from "jsonwebtoken";
 import jwksClient, { JwksClient } from "jwks-rsa";
 import { EnvHandler } from "./env-handler";
 import { JwksHandler } from "./jwks-handler";
+import { jwtVerify } from "jose";
 
 export class JWTHandler {
   private static instance: JWTHandler;
@@ -103,7 +103,7 @@ export class JWTHandler {
    * @param {Array<{kid: string}>} keySetArray - The input array of objects with a "kid" property.
    * @return {Array<{kid: string} | string>} - An array containing the needed key set (object) and the second element of the input array and its "kid" property.
    */
-  private getJwKeySet(keySetArray: { kid: string }[]) {
+  public getJwKeySet(keySetArray: { kid: string }[]) {
     return keySetArray[1];
   }
 
@@ -116,18 +116,16 @@ export class JWTHandler {
    */
   public async decodeJWT(jwt: string): Promise<[any, boolean]> {
     const keySets = await this.getKeySets();
-    const keySet = this.getJwKeySet(keySets);
-    const key = await this.jwksHandler.getPublicKeyPEM(keySet, keySet.kid);
+    const keySet = this.getJwKeySet(keySets) as any;
+    const cryptoKey = await this.jwksHandler.getCryptoKey(keySet);
 
-    return new Promise((resolve, reject) => {
-      JsonWebToken.verify(jwt, key, {}, function (err, decoded) {
-        if (err) {
-          reject(err);
-        }
-
-        resolve([decoded, true]);
-      });
-    });
+    try {
+      const decoded = await jwtVerify(jwt, cryptoKey);
+      return [decoded, true];
+    } catch (error) {
+      console.error(`error while decoding jwt: `, error);
+      return [null, false];
+    }
   }
 
   public async getVerifiedJWT(payload: any, days: number): Promise<[string, boolean]> {

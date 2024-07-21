@@ -33,11 +33,13 @@
   "dependencies": {
     "jose": "^5.6.3",
     "jsonwebtoken": "^9.0.2",
+    "jwk-to-pem": "^2.0.5",
     "jwks-rsa": "^3.1.0",
     "ts-node": "^10.9.2",
     "tslib": "^2.6.3"
   },
   "devDependencies": {
+    "@types/jwk-to-pem": "^2.0.3",
     "@types/node": "^20.14.11",
     "typescript": "^5.5.3"
   }
