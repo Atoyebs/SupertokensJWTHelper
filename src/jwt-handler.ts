@@ -83,6 +83,7 @@ export class JWTHandler {
   }
 
   public async getKeySets(): Promise<{ kid: string }[]> {
+    //TODO: remove cache from fetch call
     try {
       const response = await fetch(this.jwksUri);
       if (!response.ok) {
